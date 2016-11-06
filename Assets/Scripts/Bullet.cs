@@ -8,13 +8,17 @@ public class Bullet : MonoBehaviour {
     [SerializeField] private float bulletDamage;
     [SerializeField] private float bulletMass;
     [SerializeField] private float bulletFragmentation;
-    [SerializeField] private Vector3 bulletForce;
+    [SerializeField] private float bulletCleanUpTime;
     [SerializeField] private Vector3 dragResistance;
+    private Rigidbody rigidBody;
     #endregion
 
     // Use this for initialization
     void Start () {
+        Destroy(gameObject, bulletCleanUpTime);
 
+        rigidBody = GetComponent<Rigidbody>();
+        rigidBody.mass = bulletMass;
 	}
 	
 	// Update is called once per frame

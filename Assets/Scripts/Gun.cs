@@ -217,6 +217,7 @@ public class Gun : MonoBehaviour {
         //Check if button is still pressed
         previousState = Input.GetAxis("Fire");
         lateReloadKey = Input.GetAxis("Reload");
+        print(lateReloadKey);
     }
 
     void AdjustRecoil(Vector3 recoilAdjustment)

@@ -20,6 +20,19 @@ public class ScriptEditor : Editor
         GUIContent gui_RecoilStablisation = new GUIContent("Recoil Stablisation", "Amount the recoil will be stabilized over time");
         #endregion
 
+        #region Firing
+        script.firingVariables = EditorGUILayout.BeginToggleGroup("Firing Variables:", script.firingVariables);
+        if (script.firingVariables)
+        {
+            script.firingForce = EditorGUILayout.FloatField("Firing Force", script.firingForce);
+            script.shotsPerSecond = EditorGUILayout.FloatField("Shots Per Second", script.shotsPerSecond);
+            script.projectile = (GameObject)EditorGUILayout.ObjectField("Projectile", script.projectile, typeof(GameObject), true);
+            script.firePoint = (Transform)EditorGUILayout.ObjectField("Firing Point", script.firePoint, typeof(Transform), true);
+            script.fireState = (Gun.FireState)EditorGUILayout.EnumPopup("Fire State", script.fireState);
+        }
+        EditorGUILayout.EndToggleGroup();
+        #endregion
+
         #region Bullet Spread
         script.bulletSpreadVariables = EditorGUILayout.BeginToggleGroup("Bullet Spread Variables:", script.bulletSpreadVariables);
         if (script.bulletSpreadVariables)
@@ -37,22 +50,23 @@ public class ScriptEditor : Editor
         script.ammoVariables = EditorGUILayout.BeginToggleGroup("Ammo Variables:", script.ammoVariables);
         if (script.ammoVariables)
         {
-            script.bulletSpread = EditorGUILayout.Vector3Field(gui_BulletSpread, script.bulletSpread);
-            script.maxBulletSpread = EditorGUILayout.Vector3Field(gui_MaxBulletSpread, script.maxBulletSpread);
+            script.ammo = EditorGUILayout.FloatField("Ammo", script.ammo);
+            script.clipAmount = EditorGUILayout.FloatField("Clip Amount", script.clipAmount);
+            script.clipSize = EditorGUILayout.FloatField("Clip Size", script.clipSize);
+            script.reloadTime = EditorGUILayout.FloatField("Reload Time", script.reloadTime);
         }
         EditorGUILayout.EndToggleGroup();
         #endregion
 
-        script.firingVariables = EditorGUILayout.BeginToggleGroup("Firing Variables:", script.firingVariables);
-        if (script.firingVariables)
+        #region Controller
+        script.controllerVariables = EditorGUILayout.BeginToggleGroup("Controller Variables:", script.controllerVariables);
+        if (script.controllerVariables)
         {
-            script.bulletSpread = EditorGUILayout.Vector3Field(gui_BulletSpread, script.bulletSpread);
-            script.maxBulletSpread = EditorGUILayout.Vector3Field(gui_MaxBulletSpread, script.maxBulletSpread);
-            script.minBulletSpread = EditorGUILayout.Vector3Field(gui_MinBulletSpread, script.minBulletSpread);
-            script.recoil = EditorGUILayout.Vector3Field(gui_Recoil, script.recoil);
-            script.recoilStablisation = EditorGUILayout.Vector3Field(gui_RecoilStablisation, script.recoilStablisation);
+            script.vibrationTime = EditorGUILayout.FloatField("Vibration Time", script.vibrationTime);
+            script.vibrationIntensity = EditorGUILayout.Vector2Field("Vibration Intensity", script.vibrationIntensity);
         }
         EditorGUILayout.EndToggleGroup();
+        #endregion
     }
 }
 
@@ -60,12 +74,14 @@ public class Gun : MonoBehaviour {
 
     #region Variables
     #region Controller Variables
+    public bool controllerVariables;
     private bool playerIndexSet = false;
     private PlayerIndex playerIndex;
     private GamePadState state;
     private GamePadState prevState;
     private float timeSinceLastShot;
-    [SerializeField] private float vibrationTime;
+    public float vibrationTime;
+    public Vector2 vibrationIntensity;
     #endregion
 
     #region Bullet Spread Variables
@@ -85,11 +101,13 @@ public class Gun : MonoBehaviour {
     #region Firing Variables
     public bool firingVariables;
     private float previousState;
+    private float lateReloadKey;
     public enum FireState { Automatic, SemiAutomatic, BurstShot };
     public FireState fireState;
     public float firingForce;
-    public Vector3 firingAngle;
+    private Vector3 firingAngle;
     public float shotsPerSecond;
+    private bool canShoot = true;
     private float timeBeforeShot;
     public GameObject projectile;
     public Transform firePoint;
@@ -98,15 +116,27 @@ public class Gun : MonoBehaviour {
 
     #region Ammo Variables
     public bool ammoVariables;
-    [SerializeField] private float ammo;
-    [SerializeField] private float clipSize;
-    [SerializeField] private float reloadTime;
+    public float ammo;
+    public float clipSize;
+    public float clipAmount;
+    public float reloadTime;
     #endregion
     #endregion
 	
+    void Start()
+    {
+        if (clipAmount > 0)
+        {
+            --clipAmount;
+            ammo = clipSize;
+        }
+    }
+
 	// Update is called once per frame
 	void Update()
     {
+        UpdateInput();
+
         UpdateTimers();
 
         UpdateFiringAngle();
@@ -120,6 +150,7 @@ public class Gun : MonoBehaviour {
 
     void UpdateVibration()
     {
+        //If timer equals 0, set vibration to 0
         if (timeSinceLastShot <= 0)
         {
             GamePad.SetVibration(playerIndex, 0, 0);
@@ -128,23 +159,41 @@ public class Gun : MonoBehaviour {
 
     void UpdateTimers()
     {
+        //Update timers
         timeBeforeShot -= Time.deltaTime;
         timeSinceLastShot -= Time.deltaTime;
     }
 
     void UpdateFiringAngle()
     {
+        //Get firing angle
         firingAngle = transform.rotation.eulerAngles;
 
+        //Assign new random fire angle
         firingAngle.x += bulletSpread.x * Random.Range(-1f, 2f);
         firingAngle.y += bulletSpread.y * Random.Range(-1f, 2f);
         firingAngle.z += bulletSpread.z * Random.Range(-1f, 2f);
+    }
 
-        print(firingAngle);
+    void UpdateInput()
+    {
+        if(Input.GetAxis("Reload") > 0 && ammo != clipSize && lateReloadKey == 0 && clipAmount > 0 && canShoot)
+        {
+            canShoot = false;
+            Invoke("Reload", reloadTime);
+        }
+    }
+
+    void Reload()
+    {
+        --clipAmount;
+        ammo = clipSize;
+        canShoot = true;
     }
 
     void CalculateFiringState()
     {
+        //Check fire state and fire accordingly
         switch (fireState)
         {
             case FireState.Automatic:
@@ -165,11 +214,14 @@ public class Gun : MonoBehaviour {
 
     void LateUpdate()
     {
+        //Check if button is still pressed
         previousState = Input.GetAxis("Fire");
+        lateReloadKey = Input.GetAxis("Reload");
     }
 
     void AdjustRecoil(Vector3 recoilAdjustment)
     {
+        //Adjust recoil
         bulletSpread.x = Mathf.Clamp(bulletSpread.x + recoilAdjustment.x, minBulletSpread.x, maxBulletSpread.x);
         bulletSpread.y = Mathf.Clamp(bulletSpread.y + recoilAdjustment.y, minBulletSpread.y, maxBulletSpread.y);
         bulletSpread.z = Mathf.Clamp(bulletSpread.z + recoilAdjustment.z, minBulletSpread.z, maxBulletSpread.z);
@@ -177,17 +229,27 @@ public class Gun : MonoBehaviour {
 
     void AttemptFireProjectile()
     {
-        if (timeBeforeShot < 0)
+        //Check if can shoot
+        if (timeBeforeShot < 0 && ammo > 0 && canShoot)
         {
+            --ammo;
+
+            //Spawn projectile and set rotation
             GameObject newProjectile = Instantiate(projectile, firePoint.position, Quaternion.identity) as GameObject;
             newProjectile.transform.rotation = Quaternion.Euler(firingAngle);
+
+            //Set projectile force
             projectileRigidBody = newProjectile.GetComponent<Rigidbody>();
             projectileRigidBody.AddForce(newProjectile.transform.forward * firingForce);
+
+            //Update timer
             timeBeforeShot = shotsPerSecond;
 
+            //Update vibration timer and set vibration
             timeSinceLastShot = vibrationTime;
-            GamePad.SetVibration(playerIndex, 1, 1);
+            GamePad.SetVibration(playerIndex, vibrationIntensity.x, vibrationIntensity.y);
 
+            //adjust recoil
             AdjustRecoil(recoil);
         }
     }

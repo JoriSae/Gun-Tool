@@ -91,7 +91,7 @@ public class Gun : MonoBehaviour
     public IEnumerator AttemptReload()
     {
         //Reload ammo
-        if (ammoPool > 0 && !isReloading)
+        if (ammoPool > 0 && !isReloading && ammo != clipSize)
         {
             isReloading = true;
 

@@ -7,7 +7,6 @@ Steps:
 4 - Fire the gun
 
 Note: there is already a temp controller game object set up in the current scene.
-      If you wish to export the current build you will have to delete the UnityInspectorEditor script.
 
 There are 14 different weapon variables in which you may alter.
 

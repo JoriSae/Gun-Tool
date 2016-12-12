@@ -8,7 +8,7 @@ public class ScriptEditor : Editor
     public override void OnInspectorGUI()
     {
         Gun script = target as Gun;
-
+    
         #region GUI Object Initialization
         //Allows you to give a variable a mouse over tooltip
         GUIContent gui_BulletSpread = new GUIContent("Bullet Spread", "Variation of the angle at which the bullet would exit the gun (from 0)");
@@ -17,7 +17,7 @@ public class ScriptEditor : Editor
         GUIContent gui_Recoil = new GUIContent("Recoil", "Adjustment in bullet spread every shot");
         GUIContent gui_RecoilStablisation = new GUIContent("Recoil Stablisation", "Amount the recoil will be stabilized over time");
         #endregion
-
+    
         #region Firing
         script.firingVariables = EditorGUILayout.BeginToggleGroup("Firing Variables:", script.firingVariables);
         if (script.firingVariables)
@@ -30,7 +30,7 @@ public class ScriptEditor : Editor
         }
         EditorGUILayout.EndToggleGroup();
         #endregion
-
+    
         #region Bullet Spread
         script.bulletSpreadVariables = EditorGUILayout.BeginToggleGroup("Bullet Spread Variables:", script.bulletSpreadVariables);
         if (script.bulletSpreadVariables)
@@ -43,13 +43,13 @@ public class ScriptEditor : Editor
         }
         EditorGUILayout.EndToggleGroup();
         #endregion
-
+    
         #region Ammo
         script.ammoVariables = EditorGUILayout.BeginToggleGroup("Ammo Variables:", script.ammoVariables);
         if (script.ammoVariables)
         {
             script.ammo = EditorGUILayout.FloatField("Ammo", script.ammo);
-            script.clipAmount = EditorGUILayout.FloatField("Clip Amount", script.clipAmount);
+            script.ammoPool = EditorGUILayout.FloatField("Ammo Pool", script.ammoPool);
             script.clipSize = EditorGUILayout.FloatField("Clip Size", script.clipSize);
             script.reloadTime = EditorGUILayout.FloatField("Reload Time", script.reloadTime);
         }

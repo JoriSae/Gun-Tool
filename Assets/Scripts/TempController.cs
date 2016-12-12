@@ -17,7 +17,7 @@ public class TempController : MonoBehaviour
     public Vector2 vibrationIntensity;
 
     public float vibrationTime;
-    private float previousState;
+    private float canFire;
     private float lateReloadKey;
     private float timeSinceLastShot;
     #endregion
@@ -26,14 +26,18 @@ public class TempController : MonoBehaviour
     void Start()
     {
         gunScript = gun.GetComponent<Gun>();
-	}
+
+        FindGamePad();
+
+        gunScript.fireEvent.AddListener(Vibrate);
+    }
 	
 	// Update is called once per frame
 	void Update()
     {
+        CalculateFiringState();
         UpdateTimers();
         UpdateInput();
-        CalculateFiringState();
         UpdateVibration();
 	}
 
@@ -55,36 +59,30 @@ public class TempController : MonoBehaviour
     void CalculateFiringState()
     {
         //Check fire state and fire accordingly
-        switch (gunScript.fireState)
+        if (gunScript.fireState == Gun.FireState.Automatic)
         {
-            case Gun.FireState.Automatic:
-                if (Input.GetAxis("Fire") > 0)
-                {
-                    gunScript.AttemptFireProjectile();
-                }
-                break;
-            case Gun.FireState.SemiAutomatic:
-                if (previousState == 0 && Input.GetAxis("Fire") > 0)
-                {
-                    gunScript.AttemptFireProjectile();
-                }
-                break;
+            canFire = 0;
         }
     }
 
     void UpdateInput()
     {
-        if (Input.GetAxis("Reload") > 0 && gunScript.ammo != gunScript.clipSize && lateReloadKey == 0 && gunScript.clipAmount > 0 && gunScript.canShoot)
+        //Check Input
+        if (Input.GetAxis("Reload") > 0 && lateReloadKey == 0)
         {
-            gunScript.canShoot = false;
-            gunScript.Invoke("Reload", gunScript.reloadTime);
+            StartCoroutine(gunScript.AttemptReload());
+        }
+
+        if (canFire == 0 && Input.GetAxis("Fire") > 0)
+        {
+            gunScript.AttemptFireProjectile();
         }
     }
 
     void LateUpdate()
     {
         //Check if button is still pressed
-        previousState = Input.GetAxis("Fire");
+        canFire = Input.GetAxis("Fire");
         lateReloadKey = Input.GetAxis("Reload");
     }
 
@@ -109,5 +107,12 @@ public class TempController : MonoBehaviour
 
         prevState = state;
         state = GamePad.GetState(playerIndex);
+    }
+
+    public void Vibrate()
+    {
+        //Update vibration timer and set vibration
+        timeSinceLastShot = vibrationTime;
+        GamePad.SetVibration(playerIndex, vibrationIntensity.x, vibrationIntensity.y);
     }
 }

@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.Events;
 
-public class Gun : MonoBehaviour {
-
+public class Gun : MonoBehaviour
+{
     #region Variables
+    public UnityEvent fireEvent;
 
     #region Bullet Spread Variables
     public bool bulletSpreadVariables;
@@ -31,7 +33,7 @@ public class Gun : MonoBehaviour {
     private Rigidbody projectileRigidBody;
     private Vector3 firingAngle;
 
-    public bool canShoot = true;
+    private bool isReloading = false;
 
     public float firingForce;
     public float shotsPerSecond;
@@ -44,17 +46,16 @@ public class Gun : MonoBehaviour {
 
     public float ammo;
     public float clipSize;
-    public float clipAmount;
+    public float ammoPool;
     public float reloadTime;
     #endregion
     #endregion
-	
+
     void Start()
     {
-        if (clipAmount > 0)
+        if (fireEvent == null)
         {
-            --clipAmount;
-            ammo = clipSize;
+            fireEvent = new UnityEvent();
         }
     }
 
@@ -66,6 +67,8 @@ public class Gun : MonoBehaviour {
         UpdateFiringAngle();
 
         AdjustRecoil(recoilStablisation);
+
+        ammo = Mathf.Clamp(ammo, 0, clipSize);
     }
 
     void UpdateTimers()
@@ -85,11 +88,21 @@ public class Gun : MonoBehaviour {
         firingAngle.z += bulletSpread.z * Random.Range(-1f, 2f);
     }
 
-    void Reload()
+    public IEnumerator AttemptReload()
     {
-        --clipAmount;
-        ammo = clipSize;
-        canShoot = true;
+        //Reload ammo
+        if (ammoPool > 0 && !isReloading)
+        {
+            isReloading = true;
+
+            yield return new WaitForSeconds(reloadTime);
+
+            float requiredProjectiles = clipSize - ammo;
+            ammo += requiredProjectiles;
+            ammoPool -= requiredProjectiles;
+
+            isReloading = false;
+        }
     }
 
     void AdjustRecoil(Vector3 recoilAdjustment)
@@ -103,7 +116,7 @@ public class Gun : MonoBehaviour {
     public void AttemptFireProjectile()
     {
         //Check if can shoot
-        if (timeBeforeShot < 0 && ammo > 0 && canShoot)
+        if (timeBeforeShot < 0 && ammo > 0 && !isReloading)
         {
             --ammo;
 
@@ -118,9 +131,7 @@ public class Gun : MonoBehaviour {
             //Update timer
             timeBeforeShot = shotsPerSecond;
 
-            //Update vibration timer and set vibration
-            //timeSinceLastShot = vibrationTime;
-            //GamePad.SetVibration(playerIndex, vibrationIntensity.x, vibrationIntensity.y);
+            fireEvent.Invoke();
 
             //adjust recoil
             AdjustRecoil(recoil);

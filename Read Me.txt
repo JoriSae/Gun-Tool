@@ -1,0 +1,34 @@
+Gun Development Tool
+
+Steps:
+1 - Drag the Gun Prefab into the scene
+2 - Assign the variables (read bellow)
+3 - Call the AttemptFire method and AttemptReload method from your input script (add event listener to notify script when gun is fired)
+4 - Fire the gun
+
+Note: there is already a temp controller game object set up in the current scene.
+      If you wish to export the current build you will have to delete the UnityInspectorEditor script.
+
+There are 14 different weapon variables in which you may alter.
+
+Firing Variables:
+Firing Force allows you to alter the force at which the projectile is fired.
+Shots Per Second allows you to alter the rate at which the projectiles are fired.
+Projectile is the ammunition type, this can be altered by passing it a different GameObeject Prefab.
+Firing Point is the point at which the projectile is instantiated, the Firing Point requires a Transform.
+Fire State is the state of the weapon, there are currently two states, automatic and semi-automatic.
+ - automatic fires projectiles continuously whilst the fire key is pressed.
+ - semi-automatic only fires a projectile when the fire input key is pressed without previous input.
+
+Bullet Spread Variables
+Bullet Spread displays the current spread of the projectiles.
+Min Bullet Spread is the minium amount of spread between the projectiles.
+Max Bullet Spread is the maximum amount of spread between the projectiles.
+Recoil is the amount in which the Bullet Spread variable increases per shot.
+Recoil Stablistation is the speed in which the Bullet Spread Variable decreases over time.
+
+Ammo Variables
+Ammo is the curret ammo of the clip, this is clamped by the clip size. Altering this allows you to change the guns starting ammo.
+Ammo Pool is the amount of ammo you can reload.
+Clip Size effects the amount of bullets the gun can hold between before reloading.
+Reload Time is the time in which it takes to replenish the guns ammo.

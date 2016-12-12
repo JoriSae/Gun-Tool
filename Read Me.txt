@@ -8,6 +8,10 @@ Steps:
 
 Note: there is already a temp controller game object set up in the current scene.
 
+Current Controls:
+Fire Projectile - left mouse button / right trigger
+Reload - r key on keyboard / b button or circle button on controller
+
 There are 14 different weapon variables in which you may alter.
 
 Firing Variables:
